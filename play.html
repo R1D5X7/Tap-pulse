@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tap Rush</title>
+<style>
+body{
+  margin:0;
+  background:#111;
+  color:white;
+  font-family:Arial;
+  text-align:center;
+  overflow:hidden;
+}
+h1,h2{
+  margin:10px;
+}
+#game{
+  position:relative;
+  width:100vw;
+  height:70vh;
+  background:#222;
+}
+.circle{
+  position:absolute;
+  width:70px;
+  height:70px;
+  border-radius:50%;
+}
+.green{ background:#00cc66; }
+.red{ background:#cc3333; }
+
+button{
+  padding:10px 20px;
+  font-size:16px;
+  margin:10px;
+}
+#gameOver{
+  display:none;
+}
+</style>
+</head>
+<body>
+
+<h1>Tap Rush</h1>
+<h2>Score: <span id="score">0</span></h2>
+<h2>Time: <span id="time">30</span></h2>
+
+<div id="game"></div>
+
+<button id="startBtn">Start</button>
+
+<div id="gameOver">
+  <h2>Game Over</h2>
+  <button onclick="startGame()">Play Again</button>
+</div>
+
+<script>
+let score=0;
+let timeLeft=30;
+let gameInterval;
+let spawnInterval;
+let running=false;
+let misTapCount=0;
+
+const game=document.getElementById("game");
+const scoreEl=document.getElementById("score");
+const timeEl=document.getElementById("time");
+const startBtn=document.getElementById("startBtn");
+const gameOverEl=document.getElementById("gameOver");
+
+startBtn.onclick=startGame;
+
+function startGame(){
+  score=0;
+  timeLeft=30;
+  misTapCount=0;
+  running=true;
+  scoreEl.textContent=score;
+  timeEl.textContent=timeLeft;
+  gameOverEl.style.display="none";
+  startBtn.style.display="none";
+  game.innerHTML="";
+
+  gameInterval=setInterval(()=>{
+    timeLeft--;
+    timeEl.textContent=timeLeft;
+    if(timeLeft<=0){
+      endGame();
+    }
+  },1000);
+
+  spawnInterval=setInterval(spawnCircle,700);
+}
+
+function spawnCircle(){
+  if(!running) return;
+
+  const circle=document.createElement("div");
+  circle.classList.add("circle");
+
+  const isGood=Math.random()>0.3;
+  circle.classList.add(isGood?"green":"red");
+
+  circle.style.left=Math.random()*(game.clientWidth-70)+"px";
+  circle.style.top=Math.random()*(game.clientHeight-70)+"px";
+
+  circle.onclick=function(e){
+    e.stopPropagation();
+    if(!running) return;
+
+    if(isGood){
+      score++;
+    }else{
+      score--;
+    }
+
+    scoreEl.textContent=score;
+    circle.remove();
+  };
+
+  game.appendChild(circle);
+
+  setTimeout(()=>{
+    circle.remove();
+  },1000);
+}
+
+game.onclick=function(){
+  if(!running) return;
+  misTapCount++;
+  if(misTapCount%10===0){
+    score--;
+    scoreEl.textContent=score;
+  }
+};
+
+function endGame(){
+  running=false;
+  clearInterval(gameInterval);
+  clearInterval(spawnInterval);
+  game.innerHTML="";
+  gameOverEl.style.display="block";
+  startBtn.style.display="block";
+}
+</script>
+
+</body>
+</html>
