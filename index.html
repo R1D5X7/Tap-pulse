@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tap Pulse</title>
+<style>
+body{
+  margin:0;
+  background:#111;
+  font-family:Arial, sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  color:white;
+}
+
+#game{
+  width:95vw;
+  max-width:420px;
+  height:85vh;
+  max-height:700px;
+  background:#000;
+  border-radius:12px;
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+#hud{
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  background:#1a1a1a;
+  font-size:16px;
+}
+
+#playArea{
+  flex:1;
+  position:relative;
+}
+
+#circle{
+  position:absolute;
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  background:crimson;
+  display:none;
+}
+
+.screen{
+  position:absolute;
+  inset:0;
+  background:#000;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+}
+
+button{
+  padding:8px 16px;
+  font-size:16px;
+  margin-top:10px;
+}
+
+#leaderboard{
+  font-size:14px;
+  margin-top:10px;
+  text-align:left;
+}
+</style>
+</head>
+<body>
+
+<div id="game">
+
+  <div id="hud">
+    <div id="score">Score: 0</div>
+    <div id="timer">30</div>
+  </div>
+
+  <div id="playArea">
+    <div id="circle"></div>
+  </div>
+
+  <div id="startScreen" class="screen">
+    <h2>Tap Pulse</h2>
+    <button onclick="startGame()">Start</button>
+  </div>
+
+  <div id="endScreen" class="screen" style="display:none;">
+    <h2>Game Over</h2>
+    <div id="finalScore"></div>
+    <button onclick="startGame()">Restart</button>
+    <div id="leaderboard"></div>
+  </div>
+
+</div>
+
+<script>
+let score=0;
+let time=30;
+let misses=0;
+let timerInterval;
+
+const circle=document.getElementById("circle");
+const playArea=document.getElementById("playArea");
+
+const namePool=[
+"Alex","Nova","Rex","Luna","Zara","Blaze","Orion","Milo","Aria","Kai",
+"Ivy","Leo","Skye","Juno","Axel","Maya","Ezra","Rhea","Finn","Tara",
+"Kira","Noah","Zane","Nina","Omar","Liam","Asha","Theo","Iris","Eli",
+"Riya","Zed","Arlo","Mina","Hugo","Nyx","Kian","Sia","Dax","Elara",
+"Vera","Jett","Lara","Ronan","Aiden","Sage","Cora","Rowan","Yara","Atlas"
+];
+
+function getWeekSeed(){
+  const now=new Date();
+  const start=new Date(now.getFullYear(),0,1);
+  const week=Math.floor((now-start)/(7*24*60*60*1000));
+  return week;
+}
+
+function randomSeeded(seed){
+  let x=Math.sin(seed++)*10000;
+  return x-Math.floor(x);
+}
+
+function generateLeaderboard(){
+  const seed=getWeekSeed();
+  let list=[];
+  for(let i=0;i<9;i++){
+    const r=randomSeeded(seed+i);
+    const name=namePool[Math.floor(r*namePool.length)];
+    const score=Math.floor(15+r*45);
+    list.push({name,score});
+  }
+  list.sort((a,b)=>b.score-a.score);
+
+  list.push({name:"You",score});
+  list.sort((a,b)=>b.score-a.score);
+
+  let html="<h3>Weekly Top 10</h3>";
+  list.forEach((p,i)=>{
+    html+=`${i+1}. ${p.name} - ${p.score}<br>`;
+  });
+
+  document.getElementById("leaderboard").innerHTML=html;
+}
+
+function moveCircle(){
+  const maxX=playArea.clientWidth-60;
+  const maxY=playArea.clientHeight-60;
+  circle.style.left=Math.random()*maxX+"px";
+  circle.style.top=Math.random()*maxY+"px";
+}
+
+circle.addEventListener("click",e=>{
+  e.stopPropagation();
+  score++;
+  document.getElementById("score").innerText="Score: "+score;
+  moveCircle();
+});
+
+playArea.addEventListener("click",e=>{
+  if(e.target!==circle){
+    misses++;
+    if(misses%5===0){
+      score=Math.max(0,score-1);
+      document.getElementById("score").innerText="Score: "+score;
+    }
+  }
+});
+
+function startGame(){
+  score=0;
+  misses=0;
+  time=30;
+  document.getElementById("score").innerText="Score: 0";
+  document.getElementById("timer").innerText=time;
+  document.getElementById("startScreen").style.display="none";
+  document.getElementById("endScreen").style.display="none";
+  circle.style.display="block";
+  moveCircle();
+
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    time--;
+    document.getElementById("timer").innerText=time;
+    if(time<=0) endGame();
+  },1000);
+}
+
+function endGame(){
+  clearInterval(timerInterval);
+  circle.style.display="none";
+  document.getElementById("finalScore").innerText="Final Score: "+score;
+  generateLeaderboard();
+  document.getElementById("endScreen").style.display="flex";
+}
+</script>
+
+</body>
+</html>
